@@ -19,6 +19,7 @@ import importlib
 import json
 import os
 import random
+import sys
 from pathlib import Path
 
 from transformers import PreTrainedModel, TFPreTrainedModel
@@ -70,6 +71,16 @@ class PipelineTesterMixin:
     pipieline_model_mapping = None
     supported_frameworks = ["pt", "tf"]
 
+    @staticmethod
+    def disable_irrelevant_tests():
+        frame_f_locals = sys._getframe(1).f_locals
+        # import pdb; pdb.set_trace()
+        for task in pipeline_test_mapping.keys():
+            _task = task.replace("-", "_")
+            test_name = f"test_pipeline_{_task}"
+            if task not in frame_f_locals["pipieline_model_mapping"]:
+                frame_f_locals[test_name] = None
+
     def run_task_tests(self, task):
         """Run pipeline tests for a specific `task`
 
@@ -77,9 +88,6 @@ class PipelineTesterMixin:
             task (`str`):
                 A task name. This should be a key in the mapping `pipeline_test_mapping`.
         """
-        if task not in self.pipieline_model_mapping:
-            self.skipTest(f"Test is skipped: task `{task}` is not in `self.pipieline_model_mapping`.")
-
         model_architectures = self.pipieline_model_mapping[task]
         if issubclass(model_architectures, (PreTrainedModel, TFPreTrainedModel)):
             model_architectures = (model_architectures,)
