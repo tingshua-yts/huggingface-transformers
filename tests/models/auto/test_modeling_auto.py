@@ -274,12 +274,12 @@ class AutoModelTest(unittest.TestCase):
 
     def test_foo(self):
         erros = []
-        for i in range(30):
-            try:
-                self._test_from_pretrained_dynamic_model_distant()
-            except:
-                erros.append(i)
-        assert len(erros) == 0
+        for i in range(10):
+            # try:
+            self._test_from_pretrained_dynamic_model_distant()
+            # except Exception as e:
+        #         erros.append(i)
+        # assert len(erros) == 0
 
     def _test_from_pretrained_dynamic_model_distant(self):
         model = AutoModel.from_pretrained("hf-internal-testing/test_dynamic_model", trust_remote_code=True)
