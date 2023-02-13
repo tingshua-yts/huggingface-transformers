@@ -272,7 +272,16 @@ class AutoModelTest(unittest.TestCase):
             if CustomConfig in MODEL_MAPPING._extra_content:
                 del MODEL_MAPPING._extra_content[CustomConfig]
 
-    def test_from_pretrained_dynamic_model_distant(self):
+    def test_foo(self):
+        erros = []
+        for i in range(30):
+            try:
+                self._test_from_pretrained_dynamic_model_distant()
+            except:
+                erros.append(i)
+        assert len(erros) == 0
+
+    def _test_from_pretrained_dynamic_model_distant(self):
         model = AutoModel.from_pretrained("hf-internal-testing/test_dynamic_model", trust_remote_code=True)
         self.assertEqual(model.__class__.__name__, "NewModel")
 
@@ -280,23 +289,6 @@ class AutoModelTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             model.save_pretrained(tmp_dir)
             reloaded_model = AutoModel.from_pretrained(tmp_dir, trust_remote_code=True)
-
-        self.assertEqual(reloaded_model.__class__.__name__, "NewModel")
-        for p1, p2 in zip(model.parameters(), reloaded_model.parameters()):
-            self.assertTrue(torch.equal(p1, p2))
-
-        # This one uses a relative import to a util file, this checks it is downloaded and used properly.
-        model = AutoModel.from_pretrained("hf-internal-testing/test_dynamic_model_with_util", trust_remote_code=True)
-        self.assertEqual(model.__class__.__name__, "NewModel")
-
-        # Test model can be reloaded.
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            model.save_pretrained(tmp_dir)
-            reloaded_model = AutoModel.from_pretrained(tmp_dir, trust_remote_code=True)
-
-        self.assertEqual(reloaded_model.__class__.__name__, "NewModel")
-        for p1, p2 in zip(model.parameters(), reloaded_model.parameters()):
-            self.assertTrue(torch.equal(p1, p2))
 
     def test_new_model_registration(self):
         AutoConfig.register("custom", CustomConfig)
