@@ -303,6 +303,7 @@ class AutoModelTest(unittest.TestCase):
     def _test_from_pretrained_dynamic_model_distant(self):
 
         timeout = os.environ.get("PYTEST_TIMEOUT", 30)
+        timeout = int(timeout)
         run_test_in_subprocess(
             test_case=self, target_func=_test_from_pretrained_dynamic_model_distant_2, inputs=None, timeout=timeout
         )
