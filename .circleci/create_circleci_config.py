@@ -158,7 +158,7 @@ class CircleCIJob:
             test_command += f" -m {self.marker}"
         test_command += " | tee tests_output.txt"
 
-        test_command = "python -m pytest -n 3 --max-worker-restart=0 --dist=loadfile -s --make-reports=tests_torch tests/models/auto/test_modeling_auto.py::AutoModelTest::test_from_pretrained_dynamic_model_distant | tee tests_output.txt"
+        test_command = "python -m pytest -n 3 --max-worker-restart=0 --dist=loadfile -s --make-reports=tests_torch tests/models/auto/test_modeling_auto.py::AutoModelTest::test_foo | tee tests_output.txt"
 
         steps.append({"run": {"name": "Run tests", "command": test_command}})
         steps.append({"store_artifacts": {"path": "~/transformers/tests_output.txt"}})
