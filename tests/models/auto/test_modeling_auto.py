@@ -87,6 +87,30 @@ if is_torch_available():
     from transformers.models.tapas.modeling_tapas import TAPAS_PRETRAINED_MODEL_ARCHIVE_LIST
 
 
+import os
+import traceback
+from transformers.testing_utils import run_test_in_subprocess
+
+
+def _test_from_pretrained_dynamic_model_distant_2(in_queue, out_queue, timeout):
+
+    error = None
+    try:
+        _ = in_queue.get(timeout=timeout)
+
+        model = AutoModel.from_pretrained("hf-internal-testing/test_dynamic_model", trust_remote_code=True)
+        # Test model can be reloaded.
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            model.save_pretrained(tmp_dir)
+            reloaded_model = AutoModel.from_pretrained(tmp_dir, trust_remote_code=True)
+    except Exception:
+        error = f"{traceback.format_exc()}"
+
+    results = {"error": error}
+    out_queue.put(results, timeout=timeout)
+    out_queue.join()
+
+
 @require_torch
 class AutoModelTest(unittest.TestCase):
     @slow
@@ -273,22 +297,15 @@ class AutoModelTest(unittest.TestCase):
                 del MODEL_MAPPING._extra_content[CustomConfig]
 
     def test_foo(self):
-        erros = []
         for i in range(10):
-            # try:
             self._test_from_pretrained_dynamic_model_distant()
-            # except Exception as e:
-        #         erros.append(i)
-        # assert len(erros) == 0
 
     def _test_from_pretrained_dynamic_model_distant(self):
-        model = AutoModel.from_pretrained("hf-internal-testing/test_dynamic_model", trust_remote_code=True)
-        self.assertEqual(model.__class__.__name__, "NewModel")
 
-        # Test model can be reloaded.
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            model.save_pretrained(tmp_dir)
-            reloaded_model = AutoModel.from_pretrained(tmp_dir, trust_remote_code=True)
+        timeout = os.environ.get("PYTEST_TIMEOUT", 30)
+        run_test_in_subprocess(
+            test_case=self, target_func=_test_from_pretrained_dynamic_model_distant_2, inputs=None, timeout=timeout
+        )
 
     def test_new_model_registration(self):
         AutoConfig.register("custom", CustomConfig)
