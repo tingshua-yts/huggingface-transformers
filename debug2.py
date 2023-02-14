@@ -48,11 +48,11 @@ def foo2():
     # Test model can be reloaded.
     with tempfile.TemporaryDirectory() as tmp_dir:
         model.save_pretrained(tmp_dir)
-        # try:
-        reloaded_model = AutoModel.from_pretrained(tmp_dir, trust_remote_code=True)
-        # except Exception as e:
-        #     import pdb; pdb.set_trace()
-        #     print(e)
+        try:
+            reloaded_model = AutoModel.from_pretrained(tmp_dir, trust_remote_code=True)
+        except Exception as e:
+            import pdb; pdb.set_trace()
+            print(e)
 
 
 if __name__ == "__main__":
@@ -61,5 +61,5 @@ if __name__ == "__main__":
     for i in range(1):
         time.sleep(1)
         print(i)
-        run_test_in_subprocess(target_func=foo, inputs=None, timeout=timeout)
+        foo2()
         print("=" * 80)
