@@ -144,17 +144,24 @@ def get_class_in_module(class_name, module_path):
     Import a module on the cache directory for modules and extract a class from it.
     """
     module_path = module_path.replace(os.path.sep, ".")
-    if module_path == "transformers_modules.local.modeling":
-        p0 = "/home/circleci/.cache/huggingface/modules/"
-        p1 = "/home/circleci/.cache/huggingface/modules/transformers_modules/"
-        p2 = "/home/circleci/.cache/huggingface/modules/transformers_modules/local/"
-        for p in [p0, p1, p2]:
-            files = os.listdir(p)
-            for file in files:
-                print(file)
-                file_stats = os.stat(os.path.join(p, file))
-                print(f'File Size in Bytes is {file_stats.st_size}')
-    module = importlib.import_module(module_path)
+    # if module_path == "transformers_modules.local.modeling":
+    #     p0 = "/home/circleci/.cache/huggingface/modules/"
+    #     p1 = "/home/circleci/.cache/huggingface/modules/transformers_modules/"
+    #     p2 = "/home/circleci/.cache/huggingface/modules/transformers_modules/local/"
+    #     for p in [p0, p1, p2]:
+    #         files = os.listdir(p)
+    #         for file in files:
+    #             print(file)
+    #             file_stats = os.stat(os.path.join(p, file))
+    #             print(f'File Size in Bytes is {file_stats.st_size}')
+    module = None
+    while module is None:
+        try:
+            module = importlib.import_module(module_path)
+        except:
+            pass
+            #import pdb; pdb.set_trace()
+            #module = importlib.import_module(module_path)
     return getattr(module, class_name)
 
 
