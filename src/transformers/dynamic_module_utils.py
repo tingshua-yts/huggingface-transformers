@@ -155,28 +155,36 @@ def get_class_in_module(class_name, module_path):
     #             file_stats = os.stat(os.path.join(p, file))
     #             print(f'File Size in Bytes is {file_stats.st_size}')
 
-    import sys
-    sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules")
-    sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules\\local")
-    try:
-        from transformers_modules import local
-    except:
-        pass
+    # import sys
+    # sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules")
+    # sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules\\local")
+    # try:
+    #     from transformers_modules import local
+    # except:
+    #     pass
 
-    try:
-        module = importlib.import_module(module_path)
-    except:
-        import pdb; pdb.set_trace()
+    # try:
+    module = importlib.import_module(module_path)
+    # except:
+    #     import pdb; pdb.set_trace()
 
-    import sys
-    sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules")
-    sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules\\local")
-    try:
-        from transformers_modules import local
-    except:
-        pass
+    # import sys
+    # sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules")
+    # sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules\\local")
+    # try:
+    #     from transformers_modules import local
+    # except:
+    #     pass
 
-    return getattr(module, class_name)
+    class_obj = getattr(module, class_name)
+
+    module_dir = os.path.dirname(module.__file__)
+    pycache_dir = os.path.join(module_dir, "__pycache__")
+
+    # remove cache
+    os.system(f"rm -rf {pycache_dir}")
+
+    return class_obj
 
 
 def get_cached_module_file(

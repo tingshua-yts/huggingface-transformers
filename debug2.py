@@ -61,7 +61,7 @@ if __name__ == "__main__":
     timeout = os.environ.get("PYTEST_TIMEOUT", 10)
     timeout = int(timeout)
     for i in range(100):
-        time.sleep(2)
+        time.sleep(1)
         print(i)
         try:
             os.system('rm -rf "/home/circleci/.cache/huggingface/modules/transformers_modules/"')
