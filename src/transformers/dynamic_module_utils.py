@@ -154,14 +154,28 @@ def get_class_in_module(class_name, module_path):
     #             print(file)
     #             file_stats = os.stat(os.path.join(p, file))
     #             print(f'File Size in Bytes is {file_stats.st_size}')
-    module = None
-    while module is None:
-        try:
-            module = importlib.import_module(module_path)
-        except:
-            pass
-            #import pdb; pdb.set_trace()
-            #module = importlib.import_module(module_path)
+
+    import sys
+    sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules")
+    sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules\\local")
+    try:
+        from transformers_modules import local
+    except:
+        pass
+
+    try:
+        module = importlib.import_module(module_path)
+    except:
+        import pdb; pdb.set_trace()
+
+    import sys
+    sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules")
+    sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules\\local")
+    try:
+        from transformers_modules import local
+    except:
+        pass
+
     return getattr(module, class_name)
 
 
