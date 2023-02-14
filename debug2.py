@@ -58,7 +58,7 @@ def foo2():
 if __name__ == "__main__":
     timeout = os.environ.get("PYTEST_TIMEOUT", 10)
     timeout = int(timeout)
-    for i in range(200):
+    for i in range(1):
         time.sleep(1)
         print(i)
         run_test_in_subprocess(target_func=foo, inputs=None, timeout=timeout)
