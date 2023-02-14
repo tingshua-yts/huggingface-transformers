@@ -69,3 +69,6 @@ if __name__ == "__main__":
             pass
         run_test_in_subprocess(target_func=foo, inputs=None)
         print("=" * 80)
+
+
+# /home/circleci/.pyenv/versions/3.7.12/lib/python3.7/site-packages/transformers/dynamic_module_utils.py

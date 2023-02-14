@@ -144,9 +144,17 @@ def get_class_in_module(class_name, module_path):
     Import a module on the cache directory for modules and extract a class from it.
     """
     module_path = module_path.replace(os.path.sep, ".")
-    module = importlib.import_module(module_path)
     if module_path == "transformers_modules.local.modeling":
-        print(os.listdir("~/.cache/huggingface/modules/transformers_modules/local"))
+        p0 = "/home/circleci/.cache/huggingface/modules/"
+        p1 = "/home/circleci/.cache/huggingface/modules/transformers_modules/"
+        p2 = "/home/circleci/.cache/huggingface/modules/transformers_modules/local/"
+        for p in [p0, p1, p2]:
+            files = os.listdir(p)
+            for file in files:
+                print(file)
+                file_stats = os.stat(os.path.join(p, file))
+                print(f'File Size in Bytes is {file_stats.st_size}')
+    module = importlib.import_module(module_path)
     return getattr(module, class_name)
 
 
@@ -422,6 +430,7 @@ def custom_object_save(obj, folder, config=None):
     if isinstance(config, (list, tuple)):
         for cfg in config:
             _set_auto_map_in_config(cfg)
+            
     elif config is not None:
         _set_auto_map_in_config(config)
 
