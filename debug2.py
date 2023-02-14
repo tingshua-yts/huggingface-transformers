@@ -1,4 +1,3 @@
-from transformers import AutoModel
 import pdb, multiprocessing, time, traceback, tempfile, os
 
 
@@ -25,10 +24,12 @@ def run_test_in_subprocess(target_func, inputs=None, timeout=600):
     process.join(timeout=timeout)
 
     if results["error"] is not None:
-        raise ValueError(f'{results["error"]}')
+        # raise ValueError(f'{results["error"]}')
+        print(f'{results["error"]}')
 
 
 def foo(in_queue, out_queue, timeout):
+
     print(os.getpid())
     error = None
     try:
@@ -43,23 +44,28 @@ def foo(in_queue, out_queue, timeout):
 
 
 def foo2():
+    from transformers import AutoModel
 
     model = AutoModel.from_pretrained("hf-internal-testing/test_dynamic_model", trust_remote_code=True)
     # Test model can be reloaded.
     with tempfile.TemporaryDirectory() as tmp_dir:
         model.save_pretrained(tmp_dir)
-        try:
-            reloaded_model = AutoModel.from_pretrained(tmp_dir, trust_remote_code=True)
-        except Exception as e:
-            import pdb; pdb.set_trace()
-            print(e)
+        # try:
+        #     reloaded_model = AutoModel.from_pretrained(tmp_dir, trust_remote_code=True)
+        # except Exception as e:
+        #     print(e)
+        reloaded_model = AutoModel.from_pretrained(tmp_dir, trust_remote_code=True)
 
 
 if __name__ == "__main__":
     timeout = os.environ.get("PYTEST_TIMEOUT", 10)
     timeout = int(timeout)
-    for i in range(1):
-        time.sleep(1)
+    for i in range(100):
+        time.sleep(2)
         print(i)
-        foo2()
+        try:
+            os.system('rm -rf "/home/circleci/.cache/huggingface/modules/transformers_modules/"')
+        except:
+            pass
+        run_test_in_subprocess(target_func=foo, inputs=None)
         print("=" * 80)
