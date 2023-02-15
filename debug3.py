@@ -44,3 +44,24 @@ if __name__ == "__main__":
 # /home/circleci/.pyenv/versions/3.7.12/lib/python3.7/site-packages/transformers/models/auto/configuration_auto.py
 # /home/circleci/.pyenv/versions/3.7.12/lib/python3.7/site-packages/transformers/models/auto/auto_factory.py
 # /home/circleci/.pyenv/versions/3.7.12/lib/python3.7/site-packages/transformers/models/auto/auto_factory.py
+
+
+# os.system('ls -l "/home/huggingface/.cache/huggingface/"')
+# os.system('ls -l "/home/huggingface/.cache/huggingface/modules/"')
+# os.system('ls -l "/home/huggingface/.cache/huggingface/modules/transformers_modules"')
+# os.system('ls -l "/home/huggingface/.cache/huggingface/modules/transformers_modules/__pycache__"')
+# os.system('ls -l "/home/huggingface/.cache/huggingface/modules/transformers_modules/local"')
+# os.system('ls -l "/home/huggingface/.cache/huggingface/modules/transformers_modules/local/__pycache__"')
+#
+#
+# os.system('ls -l "/home/huggingface/.cache/huggingface/modules/transformers_modules/__pycache__"')
+# os.system('rm -rf "/home/huggingface/.cache/huggingface/modules/transformers_modules/__pycache__/__init__.cpython-38.pyc"')
+# os.system('rm -rf "/home/huggingface/.cache/huggingface/modules/transformers_modules/__pycache__"')
+#
+# os.system('rm -rf "/home/huggingface/.cache/huggingface/modules/transformers_modules/local/__pycache__/configuration.cpython-38.pyc"')
+#
+# # this is the way to go
+# os.system('rm -rf "/home/huggingface/.cache/huggingface/modules/transformers_modules/local/__pycache__"')
+#
+#
+# os.system('rm -rf "/home/huggingface/.cache/huggingface/modules/transformers_modules/local/configuration.py"')
