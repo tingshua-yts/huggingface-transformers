@@ -147,7 +147,7 @@ def get_class_in_module(class_name, module_path):
     module_dir = Path(HF_MODULES_CACHE) / os.path.dirname(module_path)
     module_path = module_path.replace(os.path.sep, ".")
 
-    module_dir_backup_temp = module_dir + "_backup_temp"
+    module_dir_backup_temp = str(module_dir) + "_backup_temp"
     os.makedirs(module_dir_backup_temp, exist_ok=True)
     shutil.copytree(module_dir, module_dir_backup_temp, dirs_exist_ok=True)
     os.system(f"rm -rf {module_dir}")
