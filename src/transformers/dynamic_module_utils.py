@@ -144,51 +144,27 @@ def get_class_in_module(class_name, module_path):
     Import a module on the cache directory for modules and extract a class from it.
     """
     module_path = module_path.replace(os.path.sep, ".")
-    # if module_path == "transformers_modules.local.modeling":
-    #     p0 = "/home/circleci/.cache/huggingface/modules/"
-    #     p1 = "/home/circleci/.cache/huggingface/modules/transformers_modules/"
-    #     p2 = "/home/circleci/.cache/huggingface/modules/transformers_modules/local/"
-    #     for p in [p0, p1, p2]:
-    #         files = os.listdir(p)
-    #         for file in files:
-    #             print(file)
-    #             file_stats = os.stat(os.path.join(p, file))
-    #             print(f'File Size in Bytes is {file_stats.st_size}')
 
-    # import sys
-    # sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules")
-    # sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules\\local")
-    # try:
-    #     from transformers_modules import local
-    # except:
-    #     pass
+    module_file_name = module_path.split(".")[-1] + ".py"
 
-    # try:
+    if module_path.startswith("transformers_modules.local"):
+
+        module_dir = "/home/huggingface/.cache/huggingface/modules/transformers_modules/local"
+        # module_dir = os.path.dirname(module.__file__)
+
+        module_dir_backup_temp = module_dir + "_backup_temp"
+        os.makedirs(module_dir_backup_temp, exist_ok=True)
+        shutil.copytree(module_dir, module_dir_backup_temp, dirs_exist_ok=True)
+        os.system(f"rm -rf {module_dir}")
+        os.makedirs(module_dir, exist_ok=True)
+        shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
+
     module = importlib.import_module(module_path)
-    # except:
-    #     import pdb; pdb.set_trace()
 
-    # import sys
-    # sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules")
-    # sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules\\local")
+    if module_path.startswith("transformers_modules.local"):
+        shutil.copytree(module_dir_backup_temp, module_dir)
 
-    # sys.path.append("/home/huggingface/.cache/huggingface/modules/transformers_modules")
-    # sys.path.append("/home/huggingface/.cache/huggingface/modules/transformers_modules/local")
-
-    # try:
-    #     from transformers_modules import local
-    # except:
-    #     pass
-
-    class_obj = getattr(module, class_name)
-
-    module_dir = os.path.dirname(module.__file__)
-    pycache_dir = os.path.join(module_dir, "__pycache__")
-
-    # remove cache
-    os.system(f"rm -rf {pycache_dir}")
-
-    return class_obj
+    return getattr(module, class_name)
 
 
 def get_cached_module_file(
