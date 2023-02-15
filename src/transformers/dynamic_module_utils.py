@@ -143,8 +143,33 @@ def get_class_in_module(class_name, module_path):
     """
     Import a module on the cache directory for modules and extract a class from it.
     """
+    module_dir = Path(HF_MODULES_CACHE) / os.path.dirname(module_path)
+    module_dir_backup_temp = str(module_dir) + "_backup_temp"
+    # copy to a temporary directory
+    shutil.copytree(module_dir, module_dir_backup_temp)
+
+    # remove `configuration.py`: this is necessary when we try to import modeling module, or other tokenizer/processor
+    # modules, while configuration module has been imported previously.
+    # TODO: This is only a simple heuristic. In general, we might need to consider any dynamic module that has been
+    #       imported. However, we don't have this information so far.
+    os.system(f"rm -rf {module_dir}/configuration.py")
+
+    # copy back the target module file - and ONLY this single file
+    # Without this hack, we may get error: `ModuleNotFoundError: No module named 'transformers_modules.local.modeling'`
+    module_file_name = module_path.split(os.path.sep)[-1] + ".py"
+    shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
+
+    # import the module
     module_path = module_path.replace(os.path.sep, ".")
     module = importlib.import_module(module_path)
+
+    # copy the whole directory back
+    os.system(f"rm -rf {module_dir}")
+    shutil.copytree(module_dir_backup_temp, module_dir)
+
+    # remove the backup directory
+    os.system(f"rm -rf {module_dir_backup_temp}")
+
     return getattr(module, class_name)
 
 
