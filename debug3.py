@@ -14,6 +14,8 @@ def foo2():
         except Exception as e:
             # import pdb; pdb.set_trace()
             print(e)
+            with open("output.txt", "w") as fp:
+                fp.write(f"{traceback.format_exc()}" + "\n")
 
 
 if __name__ == "__main__":
@@ -22,6 +24,8 @@ if __name__ == "__main__":
     for i in range(200):
         time.sleep(2)
         print(i)
+        with open("output.txt", "w") as fp:
+            fp.write(str(i) + "\n")
         try:
             os.system('rm -rf "/home/circleci/.cache/huggingface/modules/transformers_modules/"')
         except:
@@ -32,6 +36,8 @@ if __name__ == "__main__":
             pass
         foo2()
         print("=" * 80)
+        with open("output.txt", "w") as fp:
+            fp.write("=" * 80 + "\n")
 
 
 # /home/circleci/.pyenv/versions/3.7.12/lib/python3.7/site-packages/transformers/dynamic_module_utils.py

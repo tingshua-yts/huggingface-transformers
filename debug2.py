@@ -25,11 +25,16 @@ def run_test_in_subprocess(target_func, inputs=None, timeout=600):
 
     if results["error"] is not None:
         print(f'{results["error"]}')
+        with open("output.txt", "w") as fp:
+            fp.write(results["error"] + "\n")
 
 
 def foo(in_queue, out_queue, timeout):
 
     print(os.getpid())
+    with open("output.txt", "w") as fp:
+        fp.write(str(os.getpid()) + "\n")
+
     error = None
     try:
         _ = in_queue.get(timeout=timeout)
@@ -58,6 +63,8 @@ if __name__ == "__main__":
     for i in range(200):
         time.sleep(2)
         print(i)
+        with open("output.txt", "w") as fp:
+            fp.write(str(i) + "\n")
         try:
             os.system('rm -rf "/home/circleci/.cache/huggingface/modules/transformers_modules/"')
         except:
@@ -68,6 +75,8 @@ if __name__ == "__main__":
             pass
         run_test_in_subprocess(target_func=foo, inputs=None)
         print("=" * 80)
+        with open("output.txt", "w") as fp:
+            fp.write("=" * 80 + "\n")
 
 
 # /home/circleci/.pyenv/versions/3.7.12/lib/python3.7/site-packages/transformers/dynamic_module_utils.py
