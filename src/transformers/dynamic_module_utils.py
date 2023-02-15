@@ -143,21 +143,16 @@ def get_class_in_module(class_name, module_path):
     """
     Import a module on the cache directory for modules and extract a class from it.
     """
+    module_file_name = module_path.split(os.path.sep)[-1] + ".py"
+    module_dir = Path(HF_MODULES_CACHE) / os.path.dirname(module_path)
     module_path = module_path.replace(os.path.sep, ".")
 
-    module_file_name = module_path.split(".")[-1] + ".py"
-
-    if module_path.startswith("transformers_modules.local"):
-
-        module_dir = "/home/huggingface/.cache/huggingface/modules/transformers_modules/local"
-        # module_dir = os.path.dirname(module.__file__)
-
-        module_dir_backup_temp = module_dir + "_backup_temp"
-        os.makedirs(module_dir_backup_temp, exist_ok=True)
-        shutil.copytree(module_dir, module_dir_backup_temp, dirs_exist_ok=True)
-        os.system(f"rm -rf {module_dir}")
-        os.makedirs(module_dir, exist_ok=True)
-        shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
+    module_dir_backup_temp = module_dir + "_backup_temp"
+    os.makedirs(module_dir_backup_temp, exist_ok=True)
+    shutil.copytree(module_dir, module_dir_backup_temp, dirs_exist_ok=True)
+    os.system(f"rm -rf {module_dir}")
+    os.makedirs(module_dir, exist_ok=True)
+    shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
 
     module = importlib.import_module(module_path)
 
