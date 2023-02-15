@@ -21,7 +21,7 @@ if __name__ == "__main__":
     timeout = os.environ.get("PYTEST_TIMEOUT", 10)
     timeout = int(timeout)
     for i in range(1):
-        time.sleep(2)
+        time.sleep(1)
         print(i)
         with open("output.txt", "a+") as fp:
             fp.write(str(i) + "\n")

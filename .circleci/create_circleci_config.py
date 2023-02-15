@@ -163,8 +163,7 @@ class CircleCIJob:
         # test_command = "ls -l"
 
         steps.append({"run": {"name": "Run tests", "command": test_command}})
-        steps.append({"store_artifacts": {"path": "~/transformers/tests_output.txt"}})
-        steps.append({"store_artifacts": {"path": "~/transformers/reports"}})
+        steps.append({"store_artifacts": {"path": "~/transformers/output.txt"}})
         job["steps"] = steps
         return job
 
