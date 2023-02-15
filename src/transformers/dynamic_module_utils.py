@@ -171,6 +171,10 @@ def get_class_in_module(class_name, module_path):
     # import sys
     # sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules")
     # sys.path.append("C:\\Users\\33611/.cache\\huggingface\\modules\\transformers_modules\\local")
+
+    sys.path.append("/home/huggingface/.cache/huggingface/modules/transformers_modules")
+    sys.path.append("/home/huggingface/.cache/huggingface/modules/transformers_modules/local")
+
     # try:
     #     from transformers_modules import local
     # except:
