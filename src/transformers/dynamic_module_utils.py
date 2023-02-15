@@ -148,15 +148,17 @@ def get_class_in_module(class_name, module_path):
     module_path = module_path.replace(os.path.sep, ".")
 
     module_dir_backup_temp = str(module_dir) + "_backup_temp"
-    os.makedirs(module_dir_backup_temp, exist_ok=True)
-    shutil.copytree(module_dir, module_dir_backup_temp, dirs_exist_ok=True)
+    shutil.copytree(module_dir, module_dir_backup_temp)
+
     os.system(f"rm -rf {module_dir}")
     os.makedirs(module_dir, exist_ok=True)
     shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
 
     module = importlib.import_module(module_path)
 
-    shutil.copytree(module_dir_backup_temp, module_dir, dirs_exist_ok=True)
+    os.system(f"rm -rf {module_dir}")
+    shutil.copytree(module_dir_backup_temp, module_dir)
+    os.system(f"rm -rf {module_dir_backup_temp}")
 
     return getattr(module, class_name)
 
