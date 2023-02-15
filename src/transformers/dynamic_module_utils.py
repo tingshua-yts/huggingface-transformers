@@ -145,6 +145,9 @@ def get_class_in_module(class_name, module_path):
     """
     module_dir = Path(HF_MODULES_CACHE) / os.path.dirname(module_path)
     module_dir_backup_temp = str(module_dir) + "_backup_temp"
+    # make sure it doesn't exist yet
+    if os.path.isdir(module_dir_backup_temp):
+        shutil.rmtree(module_dir_backup_temp)
     # copy to a temporary directory
     shutil.copytree(module_dir, module_dir_backup_temp)
 
@@ -152,7 +155,11 @@ def get_class_in_module(class_name, module_path):
     # modules, while configuration module has been imported previously.
     # TODO: This is only a simple heuristic. In general, we might need to consider any dynamic module that has been
     #       imported. However, we don't have this information so far.
-    os.system(f"rm -rf {module_dir}/configuration.py")
+    if os.path.isfile(f"{module_dir}/configuration.py"):
+        os.remove(f"{module_dir}/configuration.py")
+    # This has to be deleted too!
+    if os.path.isdir(f"{module_dir}/__pycache__"):
+        shutil.rmtree(f"{module_dir}/__pycache__")
 
     # copy back the target module file - and ONLY this single file
     # Without this hack, we may get error: `ModuleNotFoundError: No module named 'transformers_modules.local.modeling'`
@@ -163,12 +170,12 @@ def get_class_in_module(class_name, module_path):
     module_path = module_path.replace(os.path.sep, ".")
     module = importlib.import_module(module_path)
 
-    # copy the whole directory back
-    os.system(f"rm -rf {module_dir}")
-    shutil.copytree(module_dir_backup_temp, module_dir)
+    # copy the deleted file back
+    if os.path.isfile(f"{module_dir_backup_temp}/configuration.py"):
+        shutil.copy(f"{module_dir_backup_temp}/configuration.py", module_dir)
 
     # remove the backup directory
-    os.system(f"rm -rf {module_dir_backup_temp}")
+    shutil.rmtree(module_dir_backup_temp)
 
     return getattr(module, class_name)
 
@@ -237,7 +244,7 @@ def get_cached_module_file(
     # Download and cache module_file from the repo `pretrained_model_name_or_path` of grab it if it's a local file.
     pretrained_model_name_or_path = str(pretrained_model_name_or_path)
     if os.path.isdir(pretrained_model_name_or_path):
-        submodule = "local"
+        submodule = f"local_{pretrained_model_name_or_path.replace(os.path.sep, '_')}"
     else:
         submodule = pretrained_model_name_or_path.replace("/", os.path.sep)
 
@@ -265,7 +272,7 @@ def get_cached_module_file(
     full_submodule = TRANSFORMERS_DYNAMIC_MODULE_NAME + os.path.sep + submodule
     create_dynamic_module(full_submodule)
     submodule_path = Path(HF_MODULES_CACHE) / full_submodule
-    if submodule == "local":
+    if submodule == f"local_{pretrained_model_name_or_path.replace(os.path.sep, '_')}":
         # We always copy local files (we could hash the file to see if there was a change, and give them the name of
         # that hash, to only copy when there is a modification but it seems overkill for now).
         # The only reason we do the copy is to avoid putting too many folders in sys.path.
@@ -445,7 +452,6 @@ def custom_object_save(obj, folder, config=None):
     if isinstance(config, (list, tuple)):
         for cfg in config:
             _set_auto_map_in_config(cfg)
-            
     elif config is not None:
         _set_auto_map_in_config(config)
 
