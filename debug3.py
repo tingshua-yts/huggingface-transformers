@@ -1,4 +1,5 @@
-import pdb, multiprocessing, time, traceback, tempfile, os
+import time, traceback, tempfile, os
+from transformers.utils import HF_MODULES_CACHE
 
 
 def foo2():
@@ -8,11 +9,9 @@ def foo2():
     # Test model can be reloaded.
     with tempfile.TemporaryDirectory() as tmp_dir:
         model.save_pretrained(tmp_dir)
-        # reloaded_model = AutoModel.from_pretrained(tmp_dir, trust_remote_code=True)
         try:
             reloaded_model = AutoModel.from_pretrained(tmp_dir, trust_remote_code=True)
         except Exception as e:
-            # import pdb; pdb.set_trace()
             print(e)
             with open("output.txt", "a+") as fp:
                 fp.write(f"{traceback.format_exc()}" + "\n")
@@ -21,17 +20,13 @@ def foo2():
 if __name__ == "__main__":
     timeout = os.environ.get("PYTEST_TIMEOUT", 10)
     timeout = int(timeout)
-    for i in range(200):
+    for i in range(1):
         time.sleep(2)
         print(i)
         with open("output.txt", "a+") as fp:
             fp.write(str(i) + "\n")
         try:
-            os.system('rm -rf "/home/circleci/.cache/huggingface/modules/transformers_modules/"')
-        except:
-            pass
-        try:
-            os.system('rm -rf "/home/huggingface/.cache/huggingface/modules/"')
+            os.system(f'rm -rf "{HF_MODULES_CACHE}"')
         except:
             pass
         foo2()
