@@ -397,11 +397,7 @@ class _BaseAutoModelClass:
                     "on your local machine. Make sure you have read the code there to avoid malicious use, then set "
                     "the option `trust_remote_code=True` to remove this error."
                 )
-            if kwargs.get("revision", None) is None:
-                logger.warning(
-                    "Explicitly passing a `revision` is encouraged when loading a model with custom code to ensure "
-                    "no malicious code has been contributed in a newer revision."
-                )
+
             class_ref = config.auto_map[cls.__name__]
             module_file, class_name = class_ref.split(".")
             model_class = get_class_from_dynamic_module(config.name_or_path, module_file + ".py", class_name, **kwargs)
@@ -451,11 +447,6 @@ class _BaseAutoModelClass:
                     f"Loading {pretrained_model_name_or_path} requires you to execute the modeling file in that repo "
                     "on your local machine. Make sure you have read the code there to avoid malicious use, then set "
                     "the option `trust_remote_code=True` to remove this error."
-                )
-            if hub_kwargs.get("revision", None) is None:
-                logger.warning(
-                    "Explicitly passing a `revision` is encouraged when loading a model with custom code to ensure "
-                    "no malicious code has been contributed in a newer revision."
                 )
             class_ref = config.auto_map[cls.__name__]
             module_file, class_name = class_ref.split(".")
