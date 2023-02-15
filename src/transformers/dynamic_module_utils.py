@@ -156,8 +156,7 @@ def get_class_in_module(class_name, module_path):
 
     module = importlib.import_module(module_path)
 
-    if module_path.startswith("transformers_modules.local"):
-        shutil.copytree(module_dir_backup_temp, module_dir)
+    shutil.copytree(module_dir_backup_temp, module_dir, dirs_exist_ok=True)
 
     return getattr(module, class_name)
 
