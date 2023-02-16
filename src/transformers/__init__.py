@@ -3196,6 +3196,7 @@ else:
         ]
     )
     _import_structure["models.vision_encoder_decoder"].extend(["TFVisionEncoderDecoderModel"])
+    _import_structure["models.vision_text_dual_encoder"].extend(["TFVisionTextDualEncoderModel"])
     _import_structure["models.vit"].extend(
         [
             "TFViTForImageClassification",
@@ -6182,6 +6183,7 @@ if TYPE_CHECKING:
             TFTransfoXLPreTrainedModel,
         )
         from .models.vision_encoder_decoder import TFVisionEncoderDecoderModel
+        from .models.vision_text_dual_encoder import TFVisionTextDualEncoderModel
         from .models.vit import TFViTForImageClassification, TFViTModel, TFViTPreTrainedModel
         from .models.vit_mae import TFViTMAEForPreTraining, TFViTMAEModel, TFViTMAEPreTrainedModel
         from .models.wav2vec2 import (
