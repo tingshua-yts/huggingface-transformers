@@ -153,8 +153,8 @@ def get_class_in_module(class_name, module_path):
     module_file_name = module_path.split(os.path.sep)[-1] + ".py"
 
     # copy to a temporary directory
-    shutil.copy(f"{module_dir}/{module_file_name}", module_dir_backup_temp)
-    # os.system(f"cp {module_dir}/{module_file_name} {module_dir_backup_temp}")
+    # shutil.copy(f"{module_dir}/{module_file_name}", module_dir_backup_temp)
+    os.system(f"cp {module_dir}/{module_file_name} {module_dir_backup_temp}")
     # shutil.copyfile(os.path.join(module_dir_backup_temp, module_file_name), os.path.join(module_dir, module_file_name))
 
     # os.remove(f"{module_dir}/{module_file_name}")
