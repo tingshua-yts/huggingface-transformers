@@ -155,13 +155,14 @@ def get_class_in_module(class_name, module_path):
     # copy to a temporary directory
     shutil.copy(f"{module_dir}/{module_file_name}", module_dir_backup_temp)
     # os.system(f"cp {module_dir}/{module_file_name} {module_dir_backup_temp}")
+    # shutil.copyfile(os.path.join(module_dir_backup_temp, module_file_name), os.path.join(module_dir, module_file_name))
 
     # os.remove(f"{module_dir}/{module_file_name}")
     os.system(f"rm -rf {module_dir}/{module_file_name}")
 
-    # not OK: shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
-    # OK: os.system(f"cp {module_dir_backup_temp}/{module_file_name} {module_dir}")
-    shutil.copyfile(os.path.join(module_dir_backup_temp, module_file_name), os.path.join(module_dir, module_file_name))
+    shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
+    # OK [with shutil.copy or with shutil.copyfile above]: os.system(f"cp {module_dir_backup_temp}/{module_file_name} {module_dir}")
+    # OK shutil.copyfile(os.path.join(module_dir_backup_temp, module_file_name), os.path.join(module_dir, module_file_name))
 
     # import the module
     module_path = module_path.replace(os.path.sep, ".")
