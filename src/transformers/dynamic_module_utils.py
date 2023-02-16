@@ -143,42 +143,26 @@ def get_class_in_module(class_name, module_path):
     """
     Import a module on the cache directory for modules and extract a class from it.
     """
-    module_dir = Path(HF_MODULES_CACHE) / os.path.dirname(module_path)
-    module_dir_backup_temp = str(module_dir) + "_backup_temp"
-    # make sure it doesn't exist yet
-    if os.path.isdir(module_dir_backup_temp):
-        shutil.rmtree(module_dir_backup_temp)
-    os.makedirs(module_dir_backup_temp)
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp_dir:
 
-    module_file_name = module_path.split(os.path.sep)[-1] + ".py"
-    other_module_files = ["__init__.py", "__pycache__"]
-    if module_file_name != "configuration.py":
-        other_module_files += ["configuration.py"]
+        module_dir = Path(HF_MODULES_CACHE) / os.path.dirname(module_path)
+        module_file_name = module_path.split(os.path.sep)[-1] + ".py"
 
-    other_module_files = []
+        # copy to a temporary directory
+        shutil.copy(f"{module_dir}/{module_file_name}", tmp_dir)
+        cmd = f'import os; os.remove("{module_dir}/{module_file_name}")'
+        os.system(f"python3 -c '{cmd}'")
+        # os.remove(f"{module_dir}/{module_file_name}")
 
-    # copy to a temporary directory
-    for fn in [module_file_name] + other_module_files:
-        if os.path.isfile(f"{module_dir}/{fn}"):
-            shutil.copy(f"{module_dir}/{fn}", module_dir_backup_temp)
-            cmd = f'import os; os.remove("{module_dir}/{fn}")'
-            os.system(f"python3 -c '{cmd}'")
-        elif os.path.isdir(f"{module_dir}/{fn}"):
-            shutil.rmtree(f"{module_dir}/{fn}")
+        # copy back the file that we want to import
+        shutil.copyfile(f"{tmp_dir}/{module_file_name}", f"{module_dir}/{module_file_name}")
 
-    shutil.copyfile(os.path.join(module_dir_backup_temp, module_file_name), os.path.join(module_dir, module_file_name))
+        # import the module
+        module_path = module_path.replace(os.path.sep, ".")
+        module = importlib.import_module(module_path)
 
-    # import the module
-    module_path = module_path.replace(os.path.sep, ".")
-    module = importlib.import_module(module_path)
-
-    if os.path.isfile(os.path.join(module_dir_backup_temp, "configuration.py")):
-        shutil.copyfile(os.path.join(module_dir_backup_temp, "configuration.py"), os.path.join(module_dir, "configuration.py"))
-
-    # remove the backup directory
-    shutil.rmtree(module_dir_backup_temp)
-
-    return getattr(module, class_name)
+        return getattr(module, class_name)
 
 
 def get_cached_module_file(
