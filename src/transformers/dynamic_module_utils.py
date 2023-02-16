@@ -167,11 +167,24 @@ def get_class_in_module(class_name, module_path):
     # copy back the target module file - and ONLY this single file
     # Without this hack, we may get error: `ModuleNotFoundError: No module named 'transformers_modules.local.modeling'`
     module_file_name = module_path.split(os.path.sep)[-1] + ".py"
+    if os.path.isfile(f"{module_dir}/{module_file_name}"):
+        os.remove(f"{module_dir}/{module_file_name}")
+
     shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
 
     # import the module
     module_path = module_path.replace(os.path.sep, ".")
-    module = importlib.import_module(module_path)
+    try:
+        module = importlib.import_module(module_path)
+    except ModuleNotFoundError:
+        if os.path.isfile(f"{module_dir}/{module_file_name}"):
+            os.remove(f"{module_dir}/{module_file_name}")
+        shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
+        module = importlib.import_module(module_path)
+        # try:
+        #     module = importlib.import_module(module_path)
+        # except:
+        #     import pdb; pdb.set_trace()
 
     # copy the deleted file back
     if os.path.isfile(f"{module_dir_backup_temp}/configuration.py"):
