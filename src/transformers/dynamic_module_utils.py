@@ -168,9 +168,11 @@ def get_class_in_module(class_name, module_path):
     # Without this hack, we may get error: `ModuleNotFoundError: No module named 'transformers_modules.local.modeling'`
     module_file_name = module_path.split(os.path.sep)[-1] + ".py"
     if os.path.isfile(f"{module_dir}/{module_file_name}"):
-        os.remove(f"{module_dir}/{module_file_name}")
+        # os.remove(f"{module_dir}/{module_file_name}")
+        os.system(f"rm -rf {module_dir}/{module_file_name}")
 
-    shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
+    # shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
+    os.system(f"cp {module_dir_backup_temp}/{module_file_name} {module_dir}")
 
     # import the module
     module_path = module_path.replace(os.path.sep, ".")
@@ -178,8 +180,11 @@ def get_class_in_module(class_name, module_path):
         module = importlib.import_module(module_path)
     except ModuleNotFoundError:
         if os.path.isfile(f"{module_dir}/{module_file_name}"):
-            os.remove(f"{module_dir}/{module_file_name}")
-        shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
+            # os.remove(f"{module_dir}/{module_file_name}")
+            os.system(f"rm -rf {module_dir}/{module_file_name}")
+        # shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
+        os.system(f"cp {module_dir_backup_temp}/{module_file_name} {module_dir}")
+
         module = importlib.import_module(module_path)
         # try:
         #     module = importlib.import_module(module_path)
