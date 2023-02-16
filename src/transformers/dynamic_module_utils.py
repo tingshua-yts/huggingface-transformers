@@ -148,52 +148,23 @@ def get_class_in_module(class_name, module_path):
     # make sure it doesn't exist yet
     if os.path.isdir(module_dir_backup_temp):
         shutil.rmtree(module_dir_backup_temp)
-    # copy to a temporary directory
-    shutil.copytree(module_dir, module_dir_backup_temp)
+    os.makedirs(module_dir_backup_temp)
 
-    # # remove `configuration.py`: this is necessary when we try to import modeling module, or other tokenizer/processor
-    # # modules, while configuration module has been imported previously.
-    # # TODO: This is only a simple heuristic. In general, we might need to consider any dynamic module that has been
-    # #       imported. However, we don't have this information so far.
-    # if os.path.isfile(f"{module_dir}/configuration.py"):
-    #     os.remove(f"{module_dir}/configuration.py")
-    # # `__init__.py` has to be deleted too!
-    # if os.path.isfile(f"{module_dir}/__init__.py"):
-    #     os.remove(f"{module_dir}/__init__.py")
-    # # `__pycache__` directory has to be deleted too!
-    # if os.path.isdir(f"{module_dir}/__pycache__"):
-    #     shutil.rmtree(f"{module_dir}/__pycache__")
-
-    # copy back the target module file - and ONLY this single file
-    # Without this hack, we may get error: `ModuleNotFoundError: No module named 'transformers_modules.local.modeling'`
     module_file_name = module_path.split(os.path.sep)[-1] + ".py"
-    if os.path.isfile(f"{module_dir}/{module_file_name}"):
-        # os.remove(f"{module_dir}/{module_file_name}")
-        os.system(f"rm -rf {module_dir}/{module_file_name}")
 
-    # shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
-    os.system(f"cp {module_dir_backup_temp}/{module_file_name} {module_dir}")
+    # copy to a temporary directory
+    shutil.copy(f"{module_dir}/{module_file_name}", module_dir_backup_temp)
+    # os.system(f"cp {module_dir}/{module_file_name} {module_dir_backup_temp}")
+
+    # os.remove(f"{module_dir}/{module_file_name}")
+    os.system(f"rm -rf {module_dir}/{module_file_name}")
+
+    shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
+    # os.system(f"cp {module_dir_backup_temp}/{module_file_name} {module_dir}")
 
     # import the module
     module_path = module_path.replace(os.path.sep, ".")
-    # try:
     module = importlib.import_module(module_path)
-    # except ModuleNotFoundError:
-    #     if os.path.isfile(f"{module_dir}/{module_file_name}"):
-    #         # os.remove(f"{module_dir}/{module_file_name}")
-    #         os.system(f"rm -rf {module_dir}/{module_file_name}")
-    #     # shutil.copy(os.path.join(module_dir_backup_temp, module_file_name), module_dir)
-    #     os.system(f"cp {module_dir_backup_temp}/{module_file_name} {module_dir}")
-    #
-    #     module = importlib.import_module(module_path)
-    #     # try:
-    #     #     module = importlib.import_module(module_path)
-    #     # except:
-    #     #     import pdb; pdb.set_trace()
-
-    # # copy the deleted file back
-    # if os.path.isfile(f"{module_dir_backup_temp}/configuration.py"):
-    #     shutil.copy(f"{module_dir_backup_temp}/configuration.py", module_dir)
 
     # remove the backup directory
     shutil.rmtree(module_dir_backup_temp)
