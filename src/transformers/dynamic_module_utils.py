@@ -151,12 +151,14 @@ def get_class_in_module(class_name, module_path):
     os.makedirs(module_dir_backup_temp)
 
     module_file_name = module_path.split(os.path.sep)[-1] + ".py"
-    others = ["__init__.py", "__pycache__"]
+    other_module_files = ["__init__.py", "__pycache__"]
     if module_file_name != "configuration.py":
-        others += ["configuration.py"]
+        other_module_files += ["configuration.py"]
+
+    other_module_files = []
 
     # copy to a temporary directory
-    for fn in [module_file_name] + others:
+    for fn in [module_file_name] + other_module_files:
         if os.path.isfile(f"{module_dir}/{fn}"):
             shutil.copy(f"{module_dir}/{fn}", module_dir_backup_temp)
             cmd = f'import os; os.remove("{module_dir}/{fn}")'
