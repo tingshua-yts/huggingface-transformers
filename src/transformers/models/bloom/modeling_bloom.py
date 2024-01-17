@@ -59,12 +59,32 @@ def _make_causal_mask(
     """
     Make causal mask used for self-attention.
     """
+    # target_length is seq_len
     batch_size, target_length = input_ids_shape
     mask = torch.empty((target_length, target_length + past_key_values_length), dtype=torch.bool, device=device)
     # ONNX doesn't support `torch.Tensor.triu` properly, thus we use this workaround
+
+    # get a tensor for [0,1,2...target_length]
     seq_ids = torch.arange(target_length, device=device)
+
+    # 构建causal mask
+    # seq_ids[:, None] is 
+    # tensor([[0],
+    #     [1],
+    #     [2],
+    #     [3],
+    #     [4]])
+    #
+    # seq_ids[None, :] is tensor([[0, 1, 2, 3, 4]])
+    # mask is :
+    # tensor([[False,  True,  True,  True,  True],
+        #     [False, False,  True,  True,  True],
+        #     [False, False, False,  True,  True],
+        #     [False, False, False, False,  True],
+        #     [False, False, False, False, False]])
     mask[:, past_key_values_length:] = seq_ids[:, None] < seq_ids[None, :]
 
+    # 这是past_key_values_length对应的位置为false
     if past_key_values_length > 0:
         mask[:, :past_key_values_length] = False
 
@@ -230,8 +250,9 @@ class BloomAttention(nn.Module):
         # Layer-wise attention scaling
         self.inv_norm_factor = 1.0 / math.sqrt(self.head_dim)
         self.beta = 1.0
-
+        # 参数1，用于将forward的input转换为q/k/v
         self.query_key_value = nn.Linear(self.hidden_size, 3 * self.hidden_size, bias=True)
+        # 参数2, 由于attetion计算完成后执行一次linear计算 
         self.dense = nn.Linear(self.hidden_size, self.hidden_size)
         self.attention_dropout = nn.Dropout(config.attention_dropout)
 
@@ -248,7 +269,9 @@ class BloomAttention(nn.Module):
             value: [batch_size, seq_length, num_heads, head_dim]
         """
         batch_size, seq_length, three_times_hidden_size = fused_qkv.shape
+        # 将 fused_qkv添加self.num_heads和3两个dim
         fused_qkv = fused_qkv.view(batch_size, seq_length, self.num_heads, 3, self.head_dim)
+        # 将fused_qkv 切分为multi head 的q/k/v
         return fused_qkv[..., 0, :], fused_qkv[..., 1, :], fused_qkv[..., 2, :]
 
     def _merge_heads(self, x: torch.Tensor) -> torch.Tensor:
@@ -287,15 +310,25 @@ class BloomAttention(nn.Module):
         use_cache: bool = False,
         output_attentions: bool = False,
     ):
-        fused_qkv = self.query_key_value(hidden_states)  # [batch_size, seq_length, 3 x hidden_size]
+        # 1) 生成q,k,v self.query_key_value为nn.Linear
+        # [batch_size, seq_length, 3 x hidden_size]
+        fused_qkv = self.query_key_value(hidden_states)  
 
+        # 将q,k,v切分为multi head。仅是shape变化，不涉及到weight
         # 3 x [batch_size, seq_length, num_heads, head_dim]
         (query_layer, key_layer, value_layer) = self._split_heads(fused_qkv)
 
         batch_size, q_length, _, _ = query_layer.shape
 
+        # 对q、k、v进行shape变化，便于后续的attention计算
+
+        # q shap [batch_size * num_heads, q_length, head_dim]
         query_layer = query_layer.transpose(1, 2).reshape(batch_size * self.num_heads, q_length, self.head_dim)
+
+        # k shap [batch_size * num_heads, head_dim, q_length]
         key_layer = key_layer.permute(0, 2, 3, 1).reshape(batch_size * self.num_heads, self.head_dim, q_length)
+
+        # v shape [batch_size * num_heads, q_length, head_dim]
         value_layer = value_layer.transpose(1, 2).reshape(batch_size * self.num_heads, q_length, self.head_dim)
         if layer_past is not None:
             past_key, past_value = layer_past
@@ -311,9 +344,11 @@ class BloomAttention(nn.Module):
             present = (key_layer, value_layer)
         else:
             present = None
-
+        
+        # 2) score 计算
         # [batch_size * num_heads, q_length, kv_length]
         # we use `torch.Tensor.baddbmm` instead of `torch.baddbmm` as the latter isn't supported by TorchScript v1.11
+        # 相当于纸吸管了 alibi + query_layer * key_layer
         matmul_result = alibi.baddbmm(
             batch1=query_layer,
             batch2=key_layer,
@@ -329,9 +364,14 @@ class BloomAttention(nn.Module):
         # `float16` has a minimum value of -65504.0, whereas `bfloat16` and `float32` have a minimum value of `-3.4e+38`
         if input_dtype == torch.float16:
             attention_scores = attention_scores.to(torch.float)
+        
+        # 3）mask处理
+        # attention mask中的True or False，来确定attention scores哪个部分保留，哪个部分舍弃 
         attn_weights = torch.masked_fill(attention_scores, attention_mask, torch.finfo(attention_scores.dtype).min)
+        # 4）softmax计算
         attention_probs = F.softmax(attn_weights, dim=-1, dtype=torch.float32).to(input_dtype)
 
+        # 5）dropout计算
         # [batch_size, num_heads, q_length, kv_length]
         attention_probs = self.attention_dropout(attention_probs)
 
@@ -341,13 +381,17 @@ class BloomAttention(nn.Module):
         # change view [batch_size x num_heads, q_length, kv_length]
         attention_probs_reshaped = attention_probs.view(batch_size * self.num_heads, q_length, kv_length)
 
+        # 6）attention结果计算
+        # value_layer：[batch_size * num_heads, q_length, head_dim]
         # matmul: [batch_size * num_heads, q_length, head_dim]
         context_layer = torch.bmm(attention_probs_reshaped, value_layer)
 
-        # change view [batch_size, q_length, num_heads * head_dim]
+        # 7）change view [batch_size, q_length, num_heads * head_dim]
+        # 合并multi head
         context_layer = self._merge_heads(context_layer)
 
         # aggregate results across tp ranks. See here: https://github.com/pytorch/pytorch/issues/76232
+        # 8）执行最后一层的linear计算
         if self.pretraining_tp > 1 and self.slow_but_exact:
             slices = self.hidden_size / self.pretraining_tp
             output_tensor = torch.zeros_like(context_layer)
@@ -359,6 +403,7 @@ class BloomAttention(nn.Module):
         else:
             output_tensor = self.dense(context_layer)
 
+        # 9）drop计算
         output_tensor = dropout_add(output_tensor, residual, self.hidden_dropout, self.training)
 
         outputs = (output_tensor, present)
@@ -426,7 +471,7 @@ class BloomBlock(nn.Module):
     ):
         # hidden_states: [batch_size, seq_length, hidden_size]
 
-        # Layer norm at the beginning of the transformer layer.
+        # 1) Layer norm at the beginning of the transformer layer.
         layernorm_output = self.input_layernorm(hidden_states)
 
         # Layer norm post the self attention.
@@ -435,7 +480,7 @@ class BloomBlock(nn.Module):
         else:
             residual = hidden_states
 
-        # Self attention.
+        # 2) Self attention.
         attn_outputs = self.self_attention(
             layernorm_output,
             residual,
@@ -451,6 +496,7 @@ class BloomBlock(nn.Module):
 
         outputs = attn_outputs[1:]
 
+        # 3) post attetiion layernorm
         layernorm_output = self.post_attention_layernorm(attention_output)
 
         # Get residual
@@ -459,7 +505,7 @@ class BloomBlock(nn.Module):
         else:
             residual = attention_output
 
-        # MLP.
+        # 4) MLP.
         output = self.mlp(layernorm_output, residual)
 
         if use_cache:
@@ -645,6 +691,7 @@ class BloomModel(BloomPreTrainedModel):
     def _prepare_attn_mask(
         self, attention_mask: torch.Tensor, input_shape: Tuple[int, int], past_key_values_length: int
     ) -> torch.BoolTensor:
+        # attention_mask shape is [batch_size, seq_length]
         # create causal mask
         # [batch_size, seq_length] -> [batch_size, 1, tgt_length, src_length]
         combined_attention_mask = None
@@ -712,6 +759,7 @@ class BloomModel(BloomPreTrainedModel):
         else:
             raise ValueError("You have to specify either input_ids or inputs_embeds")
 
+        # 若past key value 为空，则初始化cache；self.h为layer nums，因此相当于每个layer的的cache均为None
         if past_key_values is None:
             past_key_values = tuple([None] * len(self.h))
 
@@ -720,10 +768,12 @@ class BloomModel(BloomPreTrainedModel):
         # attention_probs has shape batch_size x num_heads x N x N
         # head_mask has shape n_layer x batch x num_heads x N x N
         head_mask = self.get_head_mask(head_mask, self.config.n_layer)
-
+        
+        # word embeddings计算
         if inputs_embeds is None:
             inputs_embeds = self.word_embeddings(input_ids)
 
+        # layer norm计算
         hidden_states = self.word_embeddings_layernorm(inputs_embeds)
 
         presents = () if use_cache else None
@@ -740,22 +790,27 @@ class BloomModel(BloomPreTrainedModel):
         # Compute alibi tensor: check build_alibi_tensor documentation
         seq_length_with_past = seq_length
         past_key_values_length = 0
+        # past kv不为空的情况
         if past_key_values[0] is not None:
             past_key_values_length = past_key_values[0][0].shape[2]
             seq_length_with_past = seq_length_with_past + past_key_values_length
         if attention_mask is None:
+            # 初始化为全是1的tensor
             attention_mask = torch.ones((batch_size, seq_length_with_past), device=hidden_states.device)
         else:
             attention_mask = attention_mask.to(hidden_states.device)
 
+        # 构件alibi
         alibi = self.build_alibi_tensor(attention_mask, self.num_heads, dtype=hidden_states.dtype)
 
+        # 构件attention mask
         causal_mask = self._prepare_attn_mask(
             attention_mask,
             input_shape=(batch_size, seq_length),
             past_key_values_length=past_key_values_length,
         )
 
+        # BloomBLock 计算，获取当前layer和对应的cache
         for i, (block, layer_past) in enumerate(zip(self.h, past_key_values)):
             if output_hidden_states:
                 all_hidden_states = all_hidden_states + (hidden_states,)
@@ -795,7 +850,7 @@ class BloomModel(BloomPreTrainedModel):
             if output_attentions:
                 all_self_attentions = all_self_attentions + (outputs[2 if use_cache else 1],)
 
-        # Add last hidden state
+        # final layernorm计算; Add last hidden state
         hidden_states = self.ln_f(hidden_states)
 
         if output_hidden_states:

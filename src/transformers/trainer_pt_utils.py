@@ -752,7 +752,7 @@ class IterableDatasetShard(IterableDataset):
 
         If your IterableDataset implements some randomization that needs to be applied the same way on all processes
         (for instance, a shuffling), you should use a `torch.Generator` in a `generator` attribute of the `dataset` to
-        generate your random numbers and call the [`~trainer_pt_utils.IterableDatasetShard.set_epoch`] method of this
+        generate your random numbers and call the [`~trainer_pt_utils..set_epoch`] method of this
         object. It will set the seed of this `generator` to `seed + epoch` on all processes before starting the
         iteration. Alternatively, you can also implement a `set_epoch()` method in your iterable dataset to deal with
         this.
